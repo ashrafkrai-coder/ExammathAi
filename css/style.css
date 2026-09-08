@@ -287,6 +287,8 @@ button, select, input { font-family: inherit; }
   margin-bottom: 12px;
 }
 
+.field-standalone { margin-bottom: 12px; }
+
 .field label {
   display: block;
   font-size: 0.78rem;
@@ -340,24 +342,6 @@ button, select, input { font-family: inherit; }
   font-size: 1.9rem;
   margin-bottom: 10px;
 }
-
-.field-default-provider { margin-top: 18px; max-width: 320px; }
-
-/* ---------------- Info notice ---------------- */
-.info-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: var(--blue-soft);
-  border: 1.5px solid var(--blue-soft-2);
-  border-radius: var(--radius-md);
-  padding: 13px 15px;
-  margin-bottom: 18px;
-  color: var(--navy);
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-.info-notice svg { width: 19px; height: 19px; flex-shrink: 0; color: var(--blue); margin-top: 1px; }
 
 /* ---------------- Buttons ---------------- */
 .btn {
@@ -641,22 +625,6 @@ button, select, input { font-family: inherit; }
 .saved-item-info span { color: var(--ink-soft); font-size: 0.8rem; }
 .saved-item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .saved-item-actions .btn { padding: 8px 12px; font-size: 0.78rem; flex: 1 1 auto; }
-
-/* ---------------- Provider status ---------------- */
-.provider-status-list { display: flex; flex-direction: column; gap: 10px; }
-.provider-status-row {
-  display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  padding: 13px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius-md);
-  background: var(--blue-soft);
-}
-.provider-status-row strong { color: var(--navy); font-family: var(--font-heading); }
-.provider-status-row span.model { display: block; font-size: 0.76rem; color: var(--ink-soft); }
-.status-badge {
-  font-size: 0.73rem; font-weight: 700; padding: 5px 12px; border-radius: var(--radius-pill);
-  white-space: nowrap;
-}
-.status-badge.ready { background: var(--success-bg); color: var(--success); }
-.status-badge.not-ready { background: var(--danger-bg); color: var(--danger); }
 
 /* ---------------- Utility ---------------- */
 .hidden { display: none !important; }

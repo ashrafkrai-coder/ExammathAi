@@ -36,7 +36,7 @@
 
   function cacheEls() {
     [
-      'fTingkatan', 'fTajuk', 'fTahap', 'fBilangan', 'fPilihan', 'fProvider',
+      'fTingkatan', 'fTajuk', 'fTahap', 'fBilangan', 'fPilihan',
       'btnGenerate', 'btnGenerateCount', 'settingsHint',
       'progressCard', 'progressBarFill', 'progressPercent', 'progressCount', 'progressStatus',
       'errorCard', 'errorMessage',
@@ -44,7 +44,6 @@
       'toggleJawapan', 'toggleLangkah',
       'btnSimpan', 'btnCetak', 'btnEksportWord', 'btnSalin',
       'aiIndicator', 'aiDot', 'aiIndicatorText',
-      'providerStatusList', 'fDefaultProvider',
       'savedList',
     ].forEach((id) => { els[id] = document.getElementById(id); });
   }
@@ -85,16 +84,6 @@
     els.btnCetak.addEventListener('click', () => window.print());
     els.btnEksportWord.addEventListener('click', onExportWordClick);
     els.btnSalin.addEventListener('click', onCopyClick);
-
-    els.fDefaultProvider.addEventListener('change', () => {
-      localStorage.setItem('examMathSpm.defaultProvider', els.fDefaultProvider.value);
-    });
-
-    const savedProvider = localStorage.getItem('examMathSpm.defaultProvider');
-    if (savedProvider) {
-      els.fDefaultProvider.value = savedProvider;
-      els.fProvider.value = savedProvider;
-    }
   }
 
   function updateGenerateButtonLabel() {
@@ -111,11 +100,9 @@
       if (!data.ok) throw new Error('gagal');
       statusData = data;
       renderAiIndicator(data);
-      renderProviderStatusList(data);
     } catch (e) {
       els.aiDot.classList.add('error');
       els.aiIndicatorText.textContent = 'Gagal menyemak status AI';
-      els.providerStatusList.innerHTML = '<p>Gagal menyemak status pelayan. Sila semak sambungan internet.</p>';
     }
   }
 
@@ -132,30 +119,6 @@
       els.aiDot.classList.add('error');
       els.aiIndicatorText.textContent = 'Tiada kunci API AI ditetapkan';
     }
-  }
-
-  function renderProviderStatusList(data) {
-    const labels = { gemini: 'Gemini' };
-    els.providerStatusList.innerHTML = '';
-
-    const supaRow = document.createElement('div');
-    supaRow.className = 'provider-status-row';
-    supaRow.innerHTML = `
-      <div><strong>Supabase (Bank Rujukan)</strong><span class="model">SUPABASE_URL + SUPABASE_SECRET_KEY</span></div>
-      <span class="status-badge ${data.supabase ? 'ready' : 'not-ready'}">${data.supabase ? 'Bersedia' : 'Belum Ditetapkan'}</span>
-    `;
-    els.providerStatusList.appendChild(supaRow);
-
-    Object.keys(data.providers).forEach((key) => {
-      const p = data.providers[key];
-      const row = document.createElement('div');
-      row.className = 'provider-status-row';
-      row.innerHTML = `
-        <div><strong>${labels[key] || key}</strong><span class="model">${p.model} • maks ${p.maxBatch} soalan/kelompok</span></div>
-        <span class="status-badge ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Bersedia' : 'Belum Ditetapkan'}</span>
-      `;
-      els.providerStatusList.appendChild(row);
-    });
   }
 
   // ---------------------------------------------------------------
@@ -209,7 +172,7 @@
     const tahap = els.fTahap.value;
     const bilangan = Number(els.fBilangan.value);
     const bilanganPilihan = Number(els.fPilihan.value);
-    const provider = els.fProvider.value;
+    const provider = 'gemini';
 
     hideEl(els.errorCard);
     hideEl(els.resultsWrap);
