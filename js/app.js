@@ -15,6 +15,10 @@
     init();
   }
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   function authHeaders() {
     const token = window.AppAuth && window.AppAuth.getAccessToken ? window.AppAuth.getAccessToken() : null;
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -239,21 +243,41 @@
     let resultTajuk = tajuk;
 
     try {
+      const MAX_ATTEMPTS = 3;
+
       for (let i = 0; i < batches.length; i++) {
         const b = batches[i];
-        updateProgress(collected.length, bilangan, `Menjana soalan ${b.mula} hingga ${b.mula + b.banyak - 1}...`);
+        let data;
+        let status;
 
-        const res = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders() },
-          body: JSON.stringify({
-            provider, tingkatan, tajuk, tahap,
-            bilangan_pilihan: bilanganPilihan,
-            mula: b.mula, banyak: b.banyak,
-          }),
-        });
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+          const statusText = attempt === 1
+            ? `Menjana soalan ${b.mula} hingga ${b.mula + b.banyak - 1}...`
+            : `Menjana soalan ${b.mula} hingga ${b.mula + b.banyak - 1}... (cuba semula ${attempt}/${MAX_ATTEMPTS})`;
+          updateProgress(collected.length, bilangan, statusText);
 
-        const data = await res.json();
+          const res = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({
+              provider, tingkatan, tajuk, tahap,
+              bilangan_pilihan: bilanganPilihan,
+              mula: b.mula, banyak: b.banyak,
+            }),
+          });
+
+          status = res.status;
+          data = await res.json();
+
+          if (data.ok) break;
+
+          // 502 = kegagalan sementara AI/rangkaian (timeout, model sibuk) - patut cuba semula.
+          // Ralat lain (401/400/404/422) bersifat kekal untuk kelompok ini - jangan buang masa.
+          if (status !== 502 || attempt === MAX_ATTEMPTS) break;
+
+          await sleep(1500);
+        }
+
         if (!data.ok) {
           throw new Error(data.error || 'Gagal menjana soalan.');
         }
