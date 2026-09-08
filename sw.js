@@ -1,9 +1,10 @@
-const CACHE_NAME = 'exam-matematik-spm-v2';
+const CACHE_NAME = 'exam-matematik-spm-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/css/style.css',
   '/js/app.js',
+  '/js/auth.js',
   '/js/docxExport.js',
   '/manifest.json',
   '/icons/icon-192.png',

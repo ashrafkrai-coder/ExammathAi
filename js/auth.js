@@ -1,6 +1,12 @@
 (function () {
   'use strict';
 
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
   const SESSION_KEY = 'examMathSpm.authSession.v1';
   const REFRESH_MARGIN_SECONDS = 60;
 

@@ -6,9 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-const NAVY = [11, 31, 58, 255]; // #0B1F3A
-const GOLD = [244, 180, 0, 255]; // #F4B400
-const WHITE = [255, 255, 255, 255];
+const NAVY_DEEP = [11, 18, 32, 255]; // #0B1220 (--navy-deep)
+const NAVY_SOFT = [30, 49, 96, 255]; // #1E3160 (--navy-soft)
+const GOLD = [244, 185, 66, 255]; // #F4B942 (--gold)
 
 function drawLine(pixels, size, x0, y0, x1, y1, color, thickness) {
   x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
@@ -40,40 +40,61 @@ function setPixel(pixels, size, x, y, color) {
 }
 
 function fillCircle(pixels, size, cx, cy, r, color) {
-  for (let y = -r; y <= r; y++) {
-    for (let x = -r; x <= r; x++) {
+  cx = Math.round(cx); cy = Math.round(cy);
+  const rCeil = Math.ceil(r);
+  for (let y = -rCeil; y <= rCeil; y++) {
+    for (let x = -rCeil; x <= rCeil; x++) {
       if (x * x + y * y <= r * r) setPixel(pixels, size, cx + x, cy + y, color);
     }
   }
 }
 
+function strokeCircle(pixels, size, cx, cy, r, thickness, color) {
+  cx = Math.round(cx); cy = Math.round(cy);
+  const rOut = r + thickness / 2;
+  const rIn = r - thickness / 2;
+  const rCeil = Math.ceil(rOut);
+  for (let y = -rCeil; y <= rCeil; y++) {
+    for (let x = -rCeil; x <= rCeil; x++) {
+      const d2 = x * x + y * y;
+      if (d2 <= rOut * rOut && d2 >= rIn * rIn) setPixel(pixels, size, cx + x, cy + y, color);
+    }
+  }
+}
+
+/**
+ * Lambang Sigma (Σ) tebal — sepadan dengan logo SVG premium di index.html
+ * (bulatan navy + gegelang emas + glyph Sigma emas tebal).
+ */
 function buildIcon(size, maskable) {
   const pixels = Buffer.alloc(size * size * 4);
   for (let i = 0; i < size * size; i++) {
-    pixels[i * 4] = NAVY[0];
-    pixels[i * 4 + 1] = NAVY[1];
-    pixels[i * 4 + 2] = NAVY[2];
-    pixels[i * 4 + 3] = NAVY[3];
+    pixels[i * 4] = NAVY_DEEP[0];
+    pixels[i * 4 + 1] = NAVY_DEEP[1];
+    pixels[i * 4 + 2] = NAVY_DEEP[2];
+    pixels[i * 4 + 3] = NAVY_DEEP[3];
   }
 
-  const pad = maskable ? size * 0.22 : size * 0.14;
-  const circleR = maskable ? size * 0.42 : size * 0.46;
-  fillCircle(pixels, size, size / 2, size / 2, circleR, [10, 26, 48, 255]);
+  const pad = maskable ? size * 0.24 : size * 0.14;
+  const circleR = maskable ? size * 0.4 : size * 0.46;
+  const cx = size / 2;
+  const cy = size / 2;
 
-  const left = pad;
-  const right = size - pad;
-  const top = pad + size * 0.06;
-  const bottom = size - pad - size * 0.06;
-  const midY = size / 2;
-  const thickness = Math.max(2, Math.round(size * 0.045));
+  fillCircle(pixels, size, cx, cy, circleR, NAVY_SOFT);
+  strokeCircle(pixels, size, cx, cy, circleR, Math.max(2, size * 0.022), GOLD);
+
+  const glyphR = circleR * 0.5;
+  const left = cx - glyphR;
+  const right = cx + glyphR;
+  const top = cy - glyphR;
+  const bottom = cy + glyphR;
+  const midInset = glyphR * 0.72;
+  const thickness = Math.max(3, Math.round(size * 0.075));
 
   drawLine(pixels, size, left, top, right, top, GOLD, thickness);
-  drawLine(pixels, size, right, top, left + (right - left) * 0.35, midY, GOLD, thickness);
-  drawLine(pixels, size, left + (right - left) * 0.35, midY, right, bottom, GOLD, thickness);
+  drawLine(pixels, size, right, top, cx - midInset * 0.15, cy, GOLD, thickness);
+  drawLine(pixels, size, cx - midInset * 0.15, cy, right, bottom, GOLD, thickness);
   drawLine(pixels, size, right, bottom, left, bottom, GOLD, thickness);
-
-  const dotR = Math.max(2, Math.round(size * 0.03));
-  fillCircle(pixels, size, size * 0.76, size * 0.24, dotR, WHITE);
 
   return encodePNG(size, size, pixels);
 }
