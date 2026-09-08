@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Exam Matematik SPM</title>
+<meta name="description" content="Penjana soalan Matematik SPM Tingkatan 4 &amp; 5 berpandukan Bank Rujukan Supabase" />
+<meta name="theme-color" content="#14213D" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/icons/icon-192.png" type="image/png" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- ================= LOGIN GATE ================= -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-glyph login-glyph-1" aria-hidden="true">&Sigma;</div>
+  <div class="login-glyph login-glyph-2" aria-hidden="true">&pi;</div>
+  <div class="login-glyph login-glyph-3" aria-hidden="true">&radic;</div>
+
+  <form class="login-card" id="loginForm" autocomplete="on">
+    <svg class="login-logo" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="48" fill="#14213D" stroke="#F4B942" stroke-width="3"/>
+      <path d="M25 30 H75 L45 50 L75 70 H25" fill="none" stroke="#F4B942" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1 class="login-title">Exam Matematik SPM</h1>
+    <p class="login-subtitle">Log masuk guru untuk mula menjana soalan.</p>
+
+    <div class="field">
+      <label for="loginEmail">E-mel</label>
+      <input type="email" id="loginEmail" name="email" placeholder="guru@sekolah.edu.my" autocomplete="username" required />
+    </div>
+    <div class="field">
+      <label for="loginPassword">Kata Laluan</label>
+      <input type="password" id="loginPassword" name="password" placeholder="********" autocomplete="current-password" required />
+    </div>
+
+    <button class="btn btn-primary login-submit" id="btnLogin" type="submit">
+      <span class="btn-spinner" id="loginSpinner" aria-hidden="true"></span>
+      <span>Log Masuk</span>
+    </button>
+
+    <p class="login-error hidden" id="loginError" role="alert"></p>
+    <p class="login-note">Akaun guru dicipta oleh pentadbir sistem melalui Supabase. Hubungi pentadbir jika belum mempunyai akaun.</p>
+  </form>
+</div>
+
+<!-- ================= APLIKASI UTAMA (selepas log masuk) ================= -->
+<div id="appRoot" hidden>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="48" fill="#14213D" stroke="#F4B942" stroke-width="3"/>
+        <path d="M25 30 H75 L45 50 L75 70 H25" fill="none" stroke="#F4B942" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Exam Matematik SPM</h1>
+        <p>Penjana Soalan Berasaskan AI</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="ai-indicator" id="aiIndicator">
+        <span class="ai-dot" id="aiDot"></span>
+        <span id="aiIndicatorText">Menyemak status AI...</span>
+      </div>
+      <button class="btn-logout" id="btnLogout" type="button" title="Log Keluar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 17l5-5-5-5M20 12H9M12 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Log Keluar</span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Navigasi utama">
+    <button class="tab-btn active" data-tab="jana" role="tab" aria-selected="true" type="button">
+      <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M4 8l8-5 8 5M4 16l8 5 8-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Jana Soalan</span>
+    </button>
+    <button class="tab-btn" data-tab="simpanan" role="tab" aria-selected="false" type="button">
+      <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v5h7V4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <span>Simpanan</span>
+    </button>
+    <button class="tab-btn" data-tab="tetapan" role="tab" aria-selected="false" type="button">
+      <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Tetapan</span>
+    </button>
+  </nav>
+</header>
+
+<main class="app-main">
+
+  <!-- ================= TAB: JANA SOALAN ================= -->
+  <section class="tab-panel active" id="tab-jana">
+
+    <div class="hero-banner" aria-hidden="true">
+      <span class="hero-glyph hero-glyph-1">&Sigma;</span>
+      <span class="hero-glyph hero-glyph-2">&pi;</span>
+      <span class="hero-glyph hero-glyph-3">&radic;</span>
+      <span class="hero-glyph hero-glyph-4">&infin;</span>
+      <svg class="hero-curve" viewBox="0 0 400 160" preserveAspectRatio="none">
+        <path d="M0 140 C 80 20, 160 160, 240 60 S 360 10, 400 90" fill="none" stroke="white" stroke-width="2" opacity="0.35"/>
+      </svg>
+      <div class="hero-grid"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow">EXAM MATEMATIK SPM &middot; AI ASSISTANT</p>
+        <h2 class="hero-title">Bina set soalan Matematik dengan lebih pantas.</h2>
+        <p class="hero-desc">Pilih Tingkatan, tajuk dan tahap. AI akan membina set soalan berdasarkan rujukan guru.</p>
+      </div>
+    </div>
+
+    <div class="layout-grid">
+
+      <div class="col-settings">
+        <div class="card" id="settingsCard">
+          <h2 class="card-title">
+            <svg class="card-title-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Tetapan Soalan
+          </h2>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="fTingkatan">Tingkatan</label>
+              <select id="fTingkatan">
+                <option value="4">Tingkatan 4</option>
+                <option value="5">Tingkatan 5</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="fTajuk">Tajuk</label>
+              <select id="fTajuk" disabled>
+                <option value="">Memuatkan tajuk...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="fTahap">Tahap Kesukaran</label>
+              <select id="fTahap">
+                <option value="mudah">Mudah</option>
+                <option value="sederhana" selected>Sederhana</option>
+                <option value="sukar">Sukar</option>
+                <option value="campuran">Campuran</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="fBilangan">Bilangan Soalan</label>
+              <select id="fBilangan">
+                <option value="5">5 soalan</option>
+                <option value="10" selected>10 soalan</option>
+                <option value="15">15 soalan</option>
+                <option value="20">20 soalan</option>
+                <option value="30">30 soalan</option>
+                <option value="40">40 soalan</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="fPilihan">Bilangan Pilihan Jawapan</label>
+              <select id="fPilihan">
+                <option value="4" selected>4 pilihan (A-D)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="fProvider">Penyedia AI</label>
+              <select id="fProvider">
+                <option value="chatgpt">ChatGPT (gpt-4.1-mini)</option>
+                <option value="gemini">Gemini (gemini-2.5-flash)</option>
+                <option value="qwen">Qwen (qwen3.8-max)</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-generate" id="btnGenerate" type="button">
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="currentColor"/></svg>
+            <span>Jana <span id="btnGenerateCount">10</span> Soalan</span>
+          </button>
+
+          <p class="hint-text" id="settingsHint"></p>
+        </div>
+      </div>
+
+      <div class="col-results">
+
+        <!-- Kad Kemajuan -->
+        <div class="card progress-card hidden" id="progressCard" role="status" aria-live="polite">
+          <div class="progress-head">
+            <h2 class="card-title progress-title">
+              <svg class="progress-spinner-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+              Sedang Menjana Soalan
+            </h2>
+            <span class="progress-percent" id="progressPercent">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+          </div>
+          <div class="progress-stats">
+            <span class="progress-count" id="progressCount">0 / 0 soalan siap</span>
+          </div>
+          <p class="progress-status" id="progressStatus">Menyediakan permintaan...</p>
+          <p class="progress-warning">Sila tunggu, jangan tutup aplikasi.</p>
+        </div>
+
+        <!-- Ralat -->
+        <div class="card error-card hidden" id="errorCard" role="alert">
+          <h2 class="card-title error-title">Ralat</h2>
+          <p id="errorMessage"></p>
+        </div>
+
+        <!-- Hasil -->
+        <div class="results-wrap hidden" id="resultsWrap">
+          <div class="card results-header-card">
+            <div class="results-header-top">
+              <div>
+                <p class="results-count-badge" id="resultsCountBadge">Set Soalan</p>
+                <h2 class="results-title" id="resultsTitle">-</h2>
+                <p class="results-meta" id="resultsMeta">-</p>
+              </div>
+              <div class="results-toggles">
+                <label class="switch-label">
+                  <input type="checkbox" id="toggleJawapan" />
+                  <span>Tunjuk Jawapan</span>
+                </label>
+                <label class="switch-label">
+                  <input type="checkbox" id="toggleLangkah" />
+                  <span>Tunjuk Langkah Kerja</span>
+                </label>
+              </div>
+            </div>
+            <div class="results-actions">
+              <button class="btn btn-secondary" id="btnSimpan" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 4v5h7V4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                Simpan
+              </button>
+              <button class="btn btn-secondary" id="btnCetak" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18h12v4H6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><rect x="3" y="9" width="18" height="8" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                Cetak
+              </button>
+              <button class="btn btn-secondary" id="btnEksportWord" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                Eksport Word
+              </button>
+              <button class="btn btn-secondary" id="btnSalin" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a1 1 0 0 1 1-1h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                Salin
+              </button>
+            </div>
+          </div>
+
+          <div class="questions-list" id="questionsList"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB: SIMPANAN ================= -->
+  <section class="tab-panel" id="tab-simpanan">
+    <div class="card">
+      <h2 class="card-title">
+        <svg class="card-title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        Set Soalan Disimpan
+      </h2>
+      <p class="hint-text">Set soalan disimpan pada peranti ini sahaja (localStorage pelayar).</p>
+      <div class="saved-list" id="savedList"></div>
+    </div>
+  </section>
+
+  <!-- ================= TAB: TETAPAN API ================= -->
+  <section class="tab-panel" id="tab-tetapan">
+    <div class="card">
+      <h2 class="card-title">
+        <svg class="card-title-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Tetapan API
+      </h2>
+
+      <div class="info-notice">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 8h.01M11 11h1v5h1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>API key disimpan dengan selamat pada pelayan. Kunci API tidak boleh dimasukkan atau dipaparkan di sini atas sebab keselamatan.</span>
+      </div>
+
+      <div class="provider-status-list" id="providerStatusList">
+        <p>Menyemak status...</p>
+      </div>
+
+      <div class="field field-default-provider">
+        <label for="fDefaultProvider">Penyedia AI Lalai</label>
+        <select id="fDefaultProvider">
+          <option value="chatgpt">ChatGPT</option>
+          <option value="gemini">Gemini</option>
+          <option value="qwen">Qwen</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <p>Exam Matematik SPM &mdash; Alat bantu guru, bukan pengganti penilaian profesional guru.</p>
+</footer>
+
+</div><!-- /#appRoot -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+<script src="/js/docxExport.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>
