@@ -22,17 +22,25 @@ test('menerima JSON dibalut dalam pagar markdown ```json', () => {
   assert.equal(result.soalan.length, 2);
 });
 
-test('menolak jika bilangan soalan tidak sama dengan diminta', () => {
+test('menolak jika bilangan soalan tidak sama dengan diminta, dengan kod BILANGAN_TIDAK_SEPADAN', () => {
   assert.throws(
     () => parseAndValidateBatch(VALID_JSON, { banyak: 3, mula: 1, bilanganPilihan: 4 }),
-    /2 soalan sahaja/
+    (err) => /2 soalan sahaja/.test(err.message) && err.code === 'BILANGAN_TIDAK_SEPADAN'
   );
 });
 
-test('menolak JSON yang rosak', () => {
+test('menolak JSON yang rosak, TANPA kod BILANGAN_TIDAK_SEPADAN (gangguan sementara, patut cuba semula)', () => {
   assert.throws(
     () => parseAndValidateBatch('bukan json', { banyak: 2, mula: 1, bilanganPilihan: 4 }),
-    /bukan format JSON/
+    (err) => /bukan format JSON/.test(err.message) && err.code !== 'BILANGAN_TIDAK_SEPADAN'
+  );
+});
+
+test('menolak JSON terpotong/tidak lengkap, TANPA kod BILANGAN_TIDAK_SEPADAN', () => {
+  const truncated = VALID_JSON.slice(0, Math.floor(VALID_JSON.length / 2));
+  assert.throws(
+    () => parseAndValidateBatch(truncated, { banyak: 2, mula: 1, bilanganPilihan: 4 }),
+    (err) => err.code !== 'BILANGAN_TIDAK_SEPADAN'
   );
 });
 

@@ -32,8 +32,40 @@ after(async () => {
 // JWKS kini disajikan melalui pelayan HTTP tempatan sebenar (lihat before()),
 // bukan lagi melalui fetch palsu - fungsi ini kekal sebagai titik panggilan
 // tunggal sekiranya rules tambahan diperlukan kelak.
+//
+// Turut menambah peraturan kosong bagi bank soalan (math_question_examples
+// bacaan, math_question_usage) supaya setiap ujian secara lalai bermula
+// dengan bank KOSONG (jatuh terus ke laluan AI penuh, seperti tingkah laku
+// sebelum ciri bank ditambah) - TANPA peraturan ini, URL yang tidak sepadan
+// akan mencetuskan mekanisme cuba-semula terbina-dalam postgrest-js (~7s
+// setiap panggilan), memperlahankan ujian secara drastik tanpa faedah.
 function withAuthRule(rules) {
-  return rules;
+  return [...rules, ...bankRules()];
+}
+
+function bankRules(examplesRows = [], usageRows = []) {
+  return [
+    {
+      match: (url, opts) => url.includes('/rest/v1/math_question_usage') && (!opts || !opts.method || opts.method === 'GET'),
+      respond: () => ({ status: 200, body: usageRows }),
+    },
+    {
+      match: (url, opts) => url.includes('/rest/v1/math_question_examples') && (!opts || !opts.method || opts.method === 'GET'),
+      respond: () => ({ status: 200, body: examplesRows }),
+    },
+    {
+      match: (url, opts) => url.includes('/rest/v1/math_question_examples') && opts && opts.method === 'POST',
+      respond: (url, opts) => {
+        const payload = JSON.parse(opts.body);
+        const rows = Array.isArray(payload) ? payload : [payload];
+        return { status: 201, body: rows.map((_, i) => ({ id: `fake-example-${Date.now()}-${i}` })) };
+      },
+    },
+    {
+      match: (url, opts) => url.includes('/rest/v1/math_question_usage') && opts && opts.method === 'POST',
+      respond: () => ({ status: 201, body: [] }),
+    },
+  ];
 }
 
 function authedReq(partial) {
@@ -161,6 +193,79 @@ test('Tingkatan 5 dengan 40 soalan (Gemini, 4 kelompok maks 10) - berjaya', asyn
   assert.equal(collected.length, 40);
 });
 
+test('Bank soalan mempunyai cukup soalan sepadan - guna bank sepenuhnya, tiada panggilan AI', async () => {
+  const bankRows = [];
+  for (let i = 0; i < 5; i++) {
+    bankRows.push({
+      id: `bank-${i}`,
+      question_text: `Soalan bank #${i}`,
+      options: { A: 'a', B: 'b', C: 'c', D: 'd' },
+      correct_answer: 'A',
+      tahap: 'sederhana',
+      working_text: `Kerja bank #${i}`,
+    });
+  }
+
+  setFakeFetchRules([
+    sourcesRule(SAMPLE_SOURCE),
+    chunksRule(SAMPLE_CHUNKS),
+    ...bankRules(bankRows, []),
+    // Sengaja TIADA geminiRule - jika kod cuba panggil AI, ujian ini akan gagal.
+  ]);
+
+  const req = authedReq({
+    method: 'POST',
+    body: { provider: 'gemini', tingkatan: 4, tajuk: 'Ungkapan Kuadratik', tahap: 'sederhana', bilangan_pilihan: 4, mula: 1, banyak: 5 },
+  });
+  const res = makeRes();
+  await generateHandler(req, res);
+
+  assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+  assert.equal(res.body.ok, true);
+  assert.equal(res.body.soalan.length, 5);
+  assert.equal(res.body.bankCount, 5);
+  assert.equal(res.body.aiCount, 0);
+  assert.deepEqual(res.body.soalan.map((q) => q.no), [1, 2, 3, 4, 5]);
+});
+
+test('Bank soalan sepadan separa - guna bank + AI untuk baki', async () => {
+  const bankRows = [{
+    id: 'bank-x',
+    question_text: 'Soalan bank sahaja satu',
+    options: { A: 'a', B: 'b', C: 'c', D: 'd' },
+    correct_answer: 'B',
+    tahap: 'mudah',
+    working_text: 'Kerja bank x',
+  }];
+
+  setFakeFetchRules([
+    sourcesRule(SAMPLE_SOURCE),
+    chunksRule(SAMPLE_CHUNKS),
+    ...bankRules(bankRows, []),
+    geminiRule((userMsg) => {
+      const startMatch = userMsg.match(/bermula daripada (\d+)/);
+      const countMatch = userMsg.match(/Jana TEPAT (\d+) soalan/);
+      const mula = Number(startMatch[1]);
+      const banyak = Number(countMatch[1]);
+      return makeQuestions(banyak, mula);
+    }),
+  ]);
+
+  const req = authedReq({
+    method: 'POST',
+    body: { provider: 'gemini', tingkatan: 4, tajuk: 'Ungkapan Kuadratik', tahap: 'campuran', bilangan_pilihan: 4, mula: 1, banyak: 4 },
+  });
+  const res = makeRes();
+  await generateHandler(req, res);
+
+  assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+  assert.equal(res.body.ok, true);
+  assert.equal(res.body.soalan.length, 4);
+  assert.equal(res.body.bankCount, 1);
+  assert.equal(res.body.aiCount, 3);
+  assert.deepEqual(res.body.soalan.map((q) => q.no), [1, 2, 3, 4]);
+});
+
 test('Tiada bahan rujukan - ralat mesra 404', async () => {
   setFakeFetchRules(withAuthRule([
     sourcesRule([]),
@@ -200,6 +305,30 @@ test('API key belum ditetapkan - ralat mesra 400', async () => {
   assert.match(res.body.error, /Kunci API/);
 
   process.env.GEMINI_API_KEY = original;
+});
+
+test('AI mengembalikan JSON rosak/terpotong - ralat 502 boleh cuba semula (bukan 422 hentikan terus)', async () => {
+  setFakeFetchRules(withAuthRule([
+    sourcesRule(SAMPLE_SOURCE),
+    chunksRule(SAMPLE_CHUNKS),
+    {
+      match: (url) => url.includes('generativelanguage.googleapis.com'),
+      respond: () => ({
+        status: 200,
+        body: { candidates: [{ content: { parts: [{ text: '{"tajuk": "X", "soalan": [ { "no": 1, "soalan": "terputus di sini...' }] } }] },
+      }),
+    },
+  ]));
+
+  const req = authedReq({
+    method: 'POST',
+    body: { provider: 'gemini', tingkatan: 4, tajuk: 'Ungkapan Kuadratik', tahap: 'sederhana', bilangan_pilihan: 4, mula: 1, banyak: 5 },
+  });
+  const res = makeRes();
+  await generateHandler(req, res);
+
+  assert.equal(res.statusCode, 502, JSON.stringify(res.body));
+  assert.equal(res.body.ok, false);
 });
 
 test('AI mengembalikan kurang daripada jumlah diminta - proses dihentikan dengan ralat', async () => {

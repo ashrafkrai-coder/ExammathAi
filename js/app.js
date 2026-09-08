@@ -241,6 +241,8 @@
 
     const collected = [];
     let resultTajuk = tajuk;
+    let bankTotal = 0;
+    let aiTotal = 0;
 
     try {
       const MAX_ATTEMPTS = 3;
@@ -284,6 +286,8 @@
 
         resultTajuk = data.tajuk || resultTajuk;
         collected.push(...data.soalan);
+        bankTotal += data.bankCount || 0;
+        aiTotal += data.aiCount != null ? data.aiCount : data.soalan.length;
         updateProgress(collected.length, bilangan, `Selesai soalan ${b.mula} hingga ${b.mula + b.banyak - 1}.`);
       }
 
@@ -298,6 +302,7 @@
         tingkatan, tajuk: resultTajuk, tahap, bilanganPilihan, provider,
         tarikh: formatTarikhHariIni(),
         soalan: collected,
+        bankCount: bankTotal,
       };
 
       updateProgress(bilangan, bilangan, 'Selesai!');
@@ -332,7 +337,11 @@
   // ---------------------------------------------------------------
   function renderResults(set) {
     els.resultsTitle.textContent = set.tajuk;
-    els.resultsMeta.textContent = `Tingkatan ${set.tingkatan} • ${TAHAP_LABEL[set.tahap] || set.tahap} • ${set.soalan.length} soalan • ${set.tarikh}`;
+    let meta = `Tingkatan ${set.tingkatan} • ${TAHAP_LABEL[set.tahap] || set.tahap} • ${set.soalan.length} soalan • ${set.tarikh}`;
+    if (set.bankCount > 0) {
+      meta += ` • ${set.bankCount} daripada bank soalan sedia ada`;
+    }
+    els.resultsMeta.textContent = meta;
 
     els.questionsList.innerHTML = set.soalan.map((q) => questionCardHtml(q)).join('');
 
